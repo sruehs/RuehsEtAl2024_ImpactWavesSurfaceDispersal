@@ -2,6 +2,7 @@ import pkg_resources
 import types
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+from matplotlib.offsetbox import AnchoredText
 from matplotlib.colors import LinearSegmentedColormap
 
 # modified after: https://stackoverflow.com/questions/40428931/package-for-listing-version-of-packages-used-in-a-jupyter-notebook
@@ -38,6 +39,26 @@ def print_imported_package_versions(session_globals):
 
 ### Classes containing Lagrangian simulation settings
 
+class ReleaseBoxLimits:
+    def __init__(self, release_name):
+        self.release_name = release_name
+        if release_name == 'GulfOfLion':
+            self.lonmin = 3
+            self.lonmax = 5.6
+            self.latmin = 42.1
+            self.latmax = 43.5
+
+        if release_name == 'SubReg14':
+            self.lonmin = 30.3
+            self.lonmax = 32.3
+            self.latmin = 35
+            self.latmax = 37
+
+        if release_name == 'SubReg9':
+            self.lonmin = 15.0
+            self.lonmax = 17.0
+            self.latmin = 36.1
+            self.latmax = 38.1
 
 
 ### Plotting functions and classes
@@ -51,6 +72,11 @@ class ColorSettings:
     purple = (170/255, 51/255, 119/255)
     grey = (187/255, 187/255, 187/255)
 
+def label_subplot(ax, label, lw, fs, loc='upper left'):
+    at = AnchoredText(label, prop=dict(size=fs), frameon=True, loc=loc)
+    at.patch.set_linewidth(lw)
+    ax.add_artist(at)
+
 def plot_bathy(grid, colors=[(0.5, 0.5, 0.5), (0.5, 0.5, 0.5)]):
     var = grid.umaskutil
     var.rename({'x': 'lon', 'y': 'lat'})
@@ -62,28 +88,12 @@ def plot_bathy(grid, colors=[(0.5, 0.5, 0.5), (0.5, 0.5, 0.5)]):
                cmap=cmapland,
                shading='nearest')
     
-def plot_releasebox(release_name, ax, fs=12):
-    if release_name == 'GulfOfLion':
-        lonmin = 3
-        lonmax = 5.6
-        latmin = 42.1
-        latmax = 43.5
-        step = 0.05  # (appr. every grid cell)
-
-    if release_name == 'SubReg14':
-        lonmin = 30.3
-        lonmax = 32.3
-        latmin = 35
-        latmax = 37
-        step = 0.05  # (appr. every grid cell)
-
-    if release_name == 'SubReg9':
-        lonmin = 15.0
-        lonmax = 17.0
-        latmin = 36.1
-        latmax = 38.1
-        step = 0.05  # (appr. every grid cell)
-
+def plot_releasebox(release_name, ax):
+    lonmin = ReleaseBoxLimits(release_name).lonmin
+    lonmax = ReleaseBoxLimits(release_name).lonmax
+    latmin = ReleaseBoxLimits(release_name).latmin
+    latmax = ReleaseBoxLimits(release_name).latmax
+    step = 0.05  # (appr. every grid cell)
     rect = patches.Rectangle((lonmin, latmin), lonmax-lonmin+step, latmax-latmin+step,
                              linewidth=0.5, edgecolor='k', facecolor='none')
     ax.add_patch(rect)
