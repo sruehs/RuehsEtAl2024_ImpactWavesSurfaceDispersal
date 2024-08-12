@@ -1,23 +1,3 @@
-########################################################################
-########################################################################
-
-# - Filename: CalcSpeed_surface_spatialmean.py
-# - Author: Siren Rühs (s.ruhs@uu.nl)
-# - Created: Sep 28th 2023
-# - Last updated: Aug 1st 2024
-# - Description:
-# Python script accompanying the manuscript "Non-negligible impact of
-# Stokes drift and wave-driven Eulerian currents on simulated surface
-# particle dispersal in the Mediterranean Sea" by Rühs et al.
-# Calculates spatial average (over whole Mediterranean Sea) of gridded
-# Lagrangian speed for coupled ocean-wave model (as well as the wave-
-# driven Eulerian current and Stokes drift components) and complementary
-# non-coupled model configuration
-
-########################################################################
-########################################################################
-
-
 print('Getting started...')
 from glob import glob
 import xarray as xr
@@ -26,25 +6,14 @@ import numpy as np
 
 ###################################################################
 ### Set path information - needs to be checked before execution ###
-
-
 print('Set path information...')
 
-# Path to model data (surface level only) on local machine
-# Can be downloaded from https://zenodo.org/records/10879702
-datapath = '../data-orig/'
-datapath_nc = datapath + '/MedFS-IMMERSE-NEMO4p2-coupled_gridUV-z001/'
+datapath = '/storage/shared/oceanparcels/input_data/NEMO4p2_CMCC/'
+datapath_nc = datapath + 'MedMFS24_IMMERSE-NEMOv4p2_uncoupled_fulldepth/'
 datapath_c = datapath + 'MedMFS24_IMMERSE-NEMOv4p2_coupled_fulldepth/'
+gridpath = '/nethome/ruhs0001/DATA/IMMERSE/' 
 
-# Path to model data (all depth levels) on UU super computing facility lorenz
-#datapath = '/storage/shared/oceanparcels/input_data/NEMO4p2_CMCC/'
-#datapath_nc = datapath + 'MedMFS24_IMMERSE-NEMOv4p2_uncoupled_fulldepth/'
-#datapath_c = datapath + 'MedMFS24_IMMERSE-NEMOv4p2_coupled_fulldepth/'
-
-maskpath = '../data-proc/domain/'
-
-outpath_data = '../data-proc/eul/speed/'
-
+outpath_data = '/nethome/ruhs0001/IMMERSE_waves/develop-lorenz/data/CalculateSpeed_fulldepth_v5/'
 
 ###################################################################
 
@@ -65,8 +34,10 @@ uvars_ugrid_c = xr.open_mfdataset(list_ugrid_c, combine='by_coords')
 vvars_vgrid_c = xr.open_mfdataset(list_vgrid_c, combine='by_coords')
 
 # mask MedSea (exclude Atlantic part)
-mask = xr.open_dataset(maskpath + 'Mask_MedSea.nc')
+mask = xr.open_dataset(outpath_data + 'Mask_MedSea.nc')
 
+# grid for calculating grid sizes (needed for weighted averaging)
+grid = xr.open_dataset(gridpath + 'mesh_mask.nc', drop_variables=('x', 'y', 'z'))
 
 print('Performing calculation for each depth level individually...')
 for i in range(0,1,1):
@@ -129,16 +100,23 @@ for i in range(0,1,1):
     speed_EcProjEcSc = ((u_EcSc * u_Ec) + (v_EcSc * v_Ec)) / speed_EcSc
 
 
-    ### 4. Calculate spatial average of speed
+    ### 4. Calculate weighted spatial average of speed
     print('Calculating spatial average...')
+    
+    def calc_weighted2Dave(tsave):
+        zweight_tmp = grid.umask.rename({'nav_lev':'z'}).where(mask.Mask_MedSea == 1)
+        zweight_tmp2 = zweight_tmp.isel(z=i).squeeze() * grid.e1u.squeeze() * grid.e2u.squeeze()
+        zweight = zweight_tmp2/zweight_tmp2.sum(dim=('x', 'y'), skipna=True)
+        xyave = (tsave*zweight).sum(dim=('x', 'y'), skipna=True)
+        return xyave
 
-    speed_Enc_rave = speed_Enc.mean(dim={'x','y'}, skipna=True).compute()
-    speed_Ec_rave = speed_Ec.mean(dim={'x','y'}, skipna=True).compute()
-    speed_Sc_rave = speed_Sc.mean(dim={'x','y'}, skipna=True).compute()
-    speed_EcSc_rave = speed_EcSc.mean(dim={'x','y'}, skipna=True).compute()
-    speed_EncSc_rave = speed_EncSc.mean(dim={'x','y'}, skipna=True).compute()
-    speed_ScProjEcSc_rave = speed_ScProjEcSc.mean(dim={'x','y'}, skipna=True).compute()
-    speed_EcProjEcSc_rave = speed_EcProjEcSc.mean(dim={'x','y'}, skipna=True).compute()
+    speed_Enc_rave = calc_weighted2Dave(speed_Enc)
+    speed_Ec_rave = calc_weighted2Dave(speed_Ec)
+    speed_Sc_rave = calc_weighted2Dave(speed_Sc)
+    speed_EcSc_rave = calc_weighted2Dave(speed_EcSc)
+    speed_EncSc_rave = calc_weighted2Dave(speed_EncSc)
+    speed_ScProjEcSc_rave = calc_weighted2Dave(speed_ScProjEcSc)
+    speed_EcProjEcSc_rave = calc_weighted2Dave(speed_EcProjEcSc)
     print('Spatial average calculated.')
 
 
@@ -154,11 +132,11 @@ for i in range(0,1,1):
                                             'EcProjEcSc': speed_EcProjEcSc_rave.where(speed_EcProjEcSc_rave != 0)})
     
     if zlev < 10:
-        speed_rave_ds.to_netcdf(f'{outpath_data}Speed-rave-z00{zlev}.nc')
+        speed_rave_ds.to_netcdf(f'{outpath_data}Speed-rave-weighted-z00{zlev}.nc')
     if (zlev >= 10) and (zlev < 100):
-        speed_rave_ds.to_netcdf(f'{outpath_data}Speed-rave-z0{zlev}.nc')
+        speed_rave_ds.to_netcdf(f'{outpath_data}Speed-rave-weighted-z0{zlev}.nc')
     if (zlev >= 100):
-        speed_rave_ds.to_netcdf(f'{outpath_data}Speed-rave-z{zlev}.nc')
+        speed_rave_ds.to_netcdf(f'{outpath_data}Speed-rave-weighted-z{zlev}.nc')
     print('Spatial average saved.')
 
 
