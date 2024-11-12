@@ -32,8 +32,8 @@ print('Set path information...')
 # Path to model data (surface level only) on local machine
 # Can be downloaded from https://zenodo.org/records/10879702
 datapath = '../data-orig/'
-datapath_nc = datapath + 'MedFS-IMMERSE-NEMO4p2-coupled_gridUV-z001/'
-datapath_c = datapath + 'MedMFS24_IMMERSE-NEMOv4p2_coupled_fulldepth/'
+datapath_nc = datapath + 'MedFS-IMMERSE-NEMO4p2-uncoupled_gridUV-z001/'
+datapath_c = datapath + 'MedFS-IMMERSE-NEMO4p2-coupled_gridUV-z001/'
 
 # Path to model data (all depth levels) on UU super computer lorenz
 # datapath = '/storage/shared/oceanparcels/input_data/NEMO4p2_CMCC/'

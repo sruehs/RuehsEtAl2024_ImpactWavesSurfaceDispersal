@@ -1,3 +1,23 @@
+########################################################################
+########################################################################
+
+# - Filename: CalcSpeed_surface_spatialmean.py
+# - Author: Siren Rühs (s.ruhs@uu.nl)
+# - Created: Sep 28th 2023
+# - Last updated: Aug 1st 2024
+# - Description:
+# Python script accompanying the manuscript "Non-negligible impact of
+# Stokes drift and wave-driven Eulerian currents on simulated surface
+# particle dispersal in the Mediterranean Sea" by Rühs et al.
+# Calculates area averages of gridded surface Lagrangian speed
+# for coupled ocean-wave model (as well as the wave-driven Eulerian
+# current and Stokes drift components) and complementary non-coupled
+# model configuration
+
+########################################################################
+########################################################################
+
+
 print('Getting started...')
 from glob import glob
 import xarray as xr
@@ -8,12 +28,20 @@ import numpy as np
 ### Set path information - needs to be checked before execution ###
 print('Set path information...')
 
-datapath = '/storage/shared/oceanparcels/input_data/NEMO4p2_CMCC/'
-datapath_nc = datapath + 'MedMFS24_IMMERSE-NEMOv4p2_uncoupled_fulldepth/'
-datapath_c = datapath + 'MedMFS24_IMMERSE-NEMOv4p2_coupled_fulldepth/'
-gridpath = '/nethome/ruhs0001/DATA/IMMERSE/' 
+# Path to model data (surface level only) on local machine
+# Can be downloaded from https://zenodo.org/records/10879702
+datapath = '../data-orig/'
+datapath_nc = datapath + 'MedFS-IMMERSE-NEMO4p2-uncoupled_gridUV-z001/'
+datapath_c = datapath + 'MedFS-IMMERSE-NEMO4p2-coupled_gridUV-z001/'
+gridpath = '../data-proc/domain/' 
+outpath_data = '../data-proc/eul/speed/'
 
-outpath_data = '/nethome/ruhs0001/IMMERSE_waves/develop-lorenz/data/CalculateSpeed_fulldepth_v5/'
+# Path to model data (all depth levels) on UU super computer lorenz
+#datapath = '/storage/shared/oceanparcels/input_data/NEMO4p2_CMCC/'
+#datapath_nc = datapath + 'MedMFS24_IMMERSE-NEMOv4p2_uncoupled_fulldepth/'
+#datapath_c = datapath + 'MedMFS24_IMMERSE-NEMOv4p2_coupled_fulldepth/'
+#gridpath = '/nethome/ruhs0001/DATA/IMMERSE/' 
+#outpath_data = '/nethome/ruhs0001/IMMERSE_waves/develop-lorenz/data/CalculateSpeed_fulldepth_v5/'
 
 ###################################################################
 
@@ -34,10 +62,10 @@ uvars_ugrid_c = xr.open_mfdataset(list_ugrid_c, combine='by_coords')
 vvars_vgrid_c = xr.open_mfdataset(list_vgrid_c, combine='by_coords')
 
 # mask MedSea (exclude Atlantic part)
-mask = xr.open_dataset(outpath_data + 'Mask_MedSea.nc')
+mask = xr.open_dataset(gridpath + 'Mask_MedSea.nc')
 
 # grid for calculating grid sizes (needed for weighted averaging)
-grid = xr.open_dataset(gridpath + 'mesh_mask.nc', drop_variables=('x', 'y', 'z'))
+grid = xr.open_dataset(datapath + 'mesh_mask.nc', drop_variables=('x', 'y', 'z'))
 
 print('Performing calculation for each depth level individually...')
 for i in range(0,1,1):
