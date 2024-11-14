@@ -4,7 +4,7 @@
 # - Filename: CalcSpeed_surface_spatialmean.py
 # - Author: Siren Rühs (s.ruhs@uu.nl)
 # - Created: Sep 28th 2023
-# - Last updated: Aug 1st 2024
+# - Last updated: Nov 14th 2024
 # - Description:
 # Python script accompanying the manuscript "Non-negligible impact of
 # Stokes drift and wave-driven Eulerian currents on simulated surface
@@ -54,10 +54,12 @@ list_vgrid_nc = sorted(glob(datapath_nc + 'MED24_OBC_1d*_grid_V.nc'))
 list_ugrid_c = sorted(glob(datapath_c + 'MED24_OBC_1d*_grid_U.nc'))
 list_vgrid_c = sorted(glob(datapath_c + 'MED24_OBC_1d*_grid_V.nc'))
 
-# uncoupled experiment contains data from 2018 to 2020, coupled only 2019 to 2020
+uvars_ugrid_nc = xr.open_mfdataset(list_ugrid_nc, combine='by_coords')
+vvars_vgrid_nc = xr.open_mfdataset(list_vgrid_nc, combine='by_coords')
+# on lorenz uncoupled experiment contains data from 2018 to 2020, coupled only 2019 to 2020
 # -> need to restrict uncoupled one to period of coupled one
-uvars_ugrid_nc = xr.open_mfdataset(list_ugrid_nc[365:], combine='by_coords')
-vvars_vgrid_nc = xr.open_mfdataset(list_vgrid_nc[365:], combine='by_coords')
+#uvars_ugrid_nc = xr.open_mfdataset(list_ugrid_nc[365:], combine='by_coords')
+#vvars_vgrid_nc = xr.open_mfdataset(list_vgrid_nc[365:], combine='by_coords')
 uvars_ugrid_c = xr.open_mfdataset(list_ugrid_c, combine='by_coords')
 vvars_vgrid_c = xr.open_mfdataset(list_vgrid_c, combine='by_coords')
 
